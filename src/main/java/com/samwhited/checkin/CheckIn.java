@@ -273,14 +273,22 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
 							// Set the coordinates
 							coordinates.put(location.getLongitude());
 							coordinates.put(location.getLatitude());
-							coordinates.put(location.getAltitude());
+							if (location.hasAltitude()) {
+								coordinates.put(location.getAltitude());
+							}
 
 							// Set up the properties object.
 							json_data.put("properties", properties);
-							properties.put("accuracy", location.getAccuracy());
-							properties.put("bearing", location.getBearing());
+							if (location.hasAccuracy()) {
+								properties.put("accuracy", location.getAccuracy());
+							}
+							if (location.hasBearing()) {
+								properties.put("bearing", location.getBearing());
+							}
 							properties.put("provider", location.getProvider());
-							properties.put("speed", location.getSpeed());
+							if (location.hasSpeed()) {
+								properties.put("speed", location.getSpeed());
+							}
 							properties.put("time", location.getTime());
 							properties.put("elapsed_realtime_nanos", location.getElapsedRealtimeNanos());
 							properties.put("raw", location.toString());
