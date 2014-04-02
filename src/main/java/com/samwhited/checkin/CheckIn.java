@@ -28,6 +28,8 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -253,7 +255,23 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
 					// Get the location data for the post...
 					final Location location = getLocation();
 					if (location != null) {
-						pairs.add(new BasicNameValuePair(POST_GPS_DATA, location.toString()));
+						// Construct JSON object
+						final JSONObject json_data = new JSONObject();
+						try {
+							json_data.put("latitude", location.getLatitude());
+							json_data.put("longitude", location.getLongitude());
+							json_data.put("altitude", location.getAltitude());
+							json_data.put("accuracy", location.getAccuracy());
+							json_data.put("bearing", location.getBearing());
+							json_data.put("provider", location.getProvider());
+							json_data.put("speed", location.getSpeed());
+							json_data.put("time", location.getTime());
+							json_data.put("elapsed_realtime_nanos", location.getElapsedRealtimeNanos());
+							json_data.put("raw", location.toString());
+						} catch (JSONException e) {
+							e.printStackTrace();
+						}
+						pairs.add(new BasicNameValuePair(POST_GPS_DATA, json_data.toString()));
 						pairs.add(new BasicNameValuePair(POST_API_KEY, CheckInPreferences.getApikeyPref(getApplicationContext())));
 					} else {
 						if (getResources() != null) {
