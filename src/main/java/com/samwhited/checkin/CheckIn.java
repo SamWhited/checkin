@@ -28,6 +28,7 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -255,19 +256,34 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
 					// Get the location data for the post...
 					final Location location = getLocation();
 					if (location != null) {
-						// Construct JSON object
+						// Construct a geoJSON object
 						final JSONObject json_data = new JSONObject();
+						final JSONObject geometry = new JSONObject();
+						final JSONObject properties = new JSONObject();
+						final JSONArray coordinates = new JSONArray();
 						try {
-							json_data.put("latitude", location.getLatitude());
-							json_data.put("longitude", location.getLongitude());
-							json_data.put("altitude", location.getAltitude());
-							json_data.put("accuracy", location.getAccuracy());
-							json_data.put("bearing", location.getBearing());
-							json_data.put("provider", location.getProvider());
-							json_data.put("speed", location.getSpeed());
-							json_data.put("time", location.getTime());
-							json_data.put("elapsed_realtime_nanos", location.getElapsedRealtimeNanos());
-							json_data.put("raw", location.toString());
+							// Setup the root (feature) object
+							json_data.put("type", "Feature");
+
+							// Add some geometry to the feature
+							json_data.put("geometry", geometry);
+							json_data.put("type", "Point");
+							geometry.put("coordinates", coordinates);
+
+							// Set the coordinates
+							coordinates.put(location.getLatitude());
+							coordinates.put(location.getLongitude());
+							coordinates.put(location.getAltitude());
+
+							// Set up the properties object.
+							json_data.put("properties", properties);
+							properties.put("accuracy", location.getAccuracy());
+							properties.put("bearing", location.getBearing());
+							properties.put("provider", location.getProvider());
+							properties.put("speed", location.getSpeed());
+							properties.put("time", location.getTime());
+							properties.put("elapsed_realtime_nanos", location.getElapsedRealtimeNanos());
+							properties.put("raw", location.toString());
 						} catch (JSONException e) {
 							e.printStackTrace();
 						}
