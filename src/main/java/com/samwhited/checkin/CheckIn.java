@@ -267,7 +267,7 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
 
 							// Add some geometry to the feature
 							json_data.put("geometry", geometry);
-							json_data.put("type", "Point");
+							geometry.put("type", "Point");
 							geometry.put("coordinates", coordinates);
 
 							// Set the coordinates
