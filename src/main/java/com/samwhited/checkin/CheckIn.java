@@ -271,8 +271,8 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
 							geometry.put("coordinates", coordinates);
 
 							// Set the coordinates
-							coordinates.put(location.getLatitude());
 							coordinates.put(location.getLongitude());
+							coordinates.put(location.getLatitude());
 							coordinates.put(location.getAltitude());
 
 							// Set up the properties object.
