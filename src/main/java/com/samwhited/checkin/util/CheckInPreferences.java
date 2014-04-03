@@ -27,7 +27,7 @@ public final class CheckInPreferences {
 	}
 
 	public static void setLastCheckin(final Context context, final long time) {
-		setLongPrefrence(context, LAST_CHECKIN, time);
+		setLongPreference(context, LAST_CHECKIN, time);
 	}
 
 	private static String getStringPreference(final Context context,
@@ -42,7 +42,7 @@ public final class CheckInPreferences {
 		return PreferenceManager.getDefaultSharedPreferences(context).getLong(key, defaultValue);
 	}
 
-	private static void setLongPrefrence(final Context context,
+	private static void setLongPreference(final Context context,
 										 final String key,
 										 final long value) {
 		PreferenceManager.getDefaultSharedPreferences(context).edit().putLong(key, value).commit();
