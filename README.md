@@ -11,6 +11,9 @@ To build run:
 
     ./gradlew build
 
+Make sure you have `Google Play Services` and `Google Repository` installed in
+the Android SDK manager. Also, API level 19 and the latest build tools.
+
 # License
 
 Copyright © 2014 Sam Whited
