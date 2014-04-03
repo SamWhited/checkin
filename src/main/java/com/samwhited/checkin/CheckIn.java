@@ -81,7 +81,7 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
 		 * @param activity The activity to handle events for.
 		 */
 		public CheckInHandler(final CheckIn activity) {
-			mActivity = new WeakReference<CheckIn>(activity);
+			mActivity = new WeakReference<>(activity);
 		}
 
 		/**
@@ -96,11 +96,12 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
 
 			if (msg.obj != null) {
 				final View view;
+				final CheckIn activity = mActivity.get();
 				switch (msg.arg1) {
 					case SHOW_TOAST:
 						final String text = msg.obj.toString();
-						if (text != null && !text.isEmpty() && mActivity.get() != null) {
-							Toast.makeText(mActivity.get(), text, Toast.LENGTH_LONG).show();
+						if (text != null && !text.isEmpty() && activity != null) {
+							Toast.makeText(activity, text, Toast.LENGTH_LONG).show();
 						}
 						break;
 					case ENABLE_VIEW:
@@ -108,10 +109,10 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
 						view.setEnabled(true);
 						break;
 					case UPDATE_CHECKIN:
-						if (mActivity.get() != null) {
+						if (activity != null) {
 							view = (View) msg.obj;
 							final CheckInFragment checkInFragment =
-									(CheckInFragment) (mActivity.get().getFragmentManager().findFragmentById(R.id.container));
+									(CheckInFragment) (activity.getFragmentManager().findFragmentById(R.id.container));
 							if (checkInFragment != null) {
 								checkInFragment.updateLastCheckinText(view);
 							}
@@ -120,9 +121,8 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
 			}
 
 		}
-	};
+	}
 	private final CheckInHandler mHandler = new CheckInHandler(this);
-
 
 	@Override
     protected void onCreate(final Bundle savedInstanceState) {
