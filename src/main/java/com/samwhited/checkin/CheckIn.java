@@ -34,11 +34,14 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-public class CheckIn extends Activity implements CheckInFragment.OnFragmentInteractionListener, GooglePlayServicesClient.OnConnectionFailedListener, GooglePlayServicesClient.ConnectionCallbacks {
+public class CheckIn extends Activity implements CheckInFragment.OnFragmentInteractionListener,
+		GooglePlayServicesClient.OnConnectionFailedListener,
+		GooglePlayServicesClient.ConnectionCallbacks {
 
 	/**
 	 * The names for fields in the HTTP POST.
@@ -65,8 +68,22 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
 	private LocationClient mLocationClient;
 
 
-	// Handler for callbacks to the UI thread
-	private final Handler mHandler = new Handler() {
+	/**
+	 * Static inner classes do not hold an implicit reference to their outer class, preventing
+	 * memory leaks where the outer class can not be garbage collected if anything were still
+	 * using the handler.
+	 */
+	private static class CheckInHandler extends Handler {
+		private final WeakReference<CheckIn> mActivity;
+
+		/**
+		 * Constructor for our custom handler that takes in the outer activity.
+		 * @param activity The activity to handle events for.
+		 */
+		public CheckInHandler(final CheckIn activity) {
+			mActivity = new WeakReference<CheckIn>(activity);
+		}
+
 		/**
 		 * Handle a message sent from the networking thread.
 		 * @param msg The message object.
@@ -82,10 +99,8 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
 				switch (msg.arg1) {
 					case SHOW_TOAST:
 						final String text = msg.obj.toString();
-						if (text != null && !text.isEmpty() && getApplicationContext() != null) {
-							Toast.makeText(getApplicationContext(),
-									text,
-									Toast.LENGTH_LONG).show();
+						if (text != null && !text.isEmpty() && mActivity.get() != null) {
+							Toast.makeText(mActivity.get(), text, Toast.LENGTH_LONG).show();
 						}
 						break;
 					case ENABLE_VIEW:
@@ -93,17 +108,20 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
 						view.setEnabled(true);
 						break;
 					case UPDATE_CHECKIN:
-						view = (View) msg.obj;
-						final CheckInFragment checkInFragment =
-								(CheckInFragment)getFragmentManager().findFragmentById(R.id.container);
-						if (checkInFragment != null) {
-							checkInFragment.updateLastCheckinText(view);
+						if (mActivity.get() != null) {
+							view = (View) msg.obj;
+							final CheckInFragment checkInFragment =
+									(CheckInFragment) (mActivity.get().getFragmentManager().findFragmentById(R.id.container));
+							if (checkInFragment != null) {
+								checkInFragment.updateLastCheckinText(view);
+							}
 						}
 				}
 			}
 
 		}
 	};
+	private final CheckInHandler mHandler = new CheckInHandler(this);
 
 
 	@Override
