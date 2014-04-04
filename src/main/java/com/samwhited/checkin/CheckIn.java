@@ -7,8 +7,6 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -20,125 +18,66 @@ import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationClient;
 import com.samwhited.checkin.util.CheckInPreferences;
+import com.samwhited.checkin.util.GeoJSON;
+import com.samwhited.checkin.util.NetworkUtils;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 
 public class CheckIn extends Activity implements CheckInFragment.OnFragmentInteractionListener,
 		GooglePlayServicesClient.OnConnectionFailedListener,
 		GooglePlayServicesClient.ConnectionCallbacks {
 
-	/**
-	 * The names for fields in the HTTP POST.
-	 */
-	public final static String POST_GPS_DATA = "location";
-	public final static String POST_API_KEY  = "api_key";
-
-	/**
-	 * Messages which can be sent to the UI thread handler.
-	 */
-	public final static int SHOW_TOAST     = 0;
-	public final static int ENABLE_VIEW    = 1;
-	public final static int UPDATE_CHECKIN = 2;
-
 	/*
-     * Define a request code to send to Google Play services
+	 * Define a request code to send to Google Play services
      * This code is returned in Activity.onActivityResult
      */
 	private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
-
+	/**
+	 * A handler to use for long running tasks that shouldn't block the UI thread (uploads).
+	 */
+	private CheckInHandler mHandler;
 	/**
 	 * The location client for getting location data.
 	 */
 	private LocationClient mLocationClient;
 
+	/**
+	 * The database to use for storing checkins.
+	 */
+	private CheckInDB db;
 
 	/**
-	 * Static inner classes do not hold an implicit reference to their outer class, preventing
-	 * memory leaks where the outer class can not be garbage collected if anything were still
-	 * using the handler.
+	 * The options menu used by this activity.
 	 */
-	private static class CheckInHandler extends Handler {
-		private final WeakReference<CheckIn> mActivity;
-
-		/**
-		 * Constructor for our custom handler that takes in the outer activity.
-		 * @param activity The activity to handle events for.
-		 */
-		public CheckInHandler(final CheckIn activity) {
-			mActivity = new WeakReference<>(activity);
-		}
-
-		/**
-		 * Handle a message sent from the networking thread.
-		 * @param msg The message object.
-		 */
-		@Override
-		public void handleMessage(final Message msg) {
-			if (msg == null) {
-				return;
-			}
-
-			if (msg.obj != null) {
-				final View view;
-				final CheckIn activity = mActivity.get();
-				switch (msg.arg1) {
-					case SHOW_TOAST:
-						final String text = msg.obj.toString();
-						if (text != null && !text.isEmpty() && activity != null) {
-							Toast.makeText(activity, text, Toast.LENGTH_LONG).show();
-						}
-						break;
-					case ENABLE_VIEW:
-						view = (View)msg.obj;
-						view.setEnabled(true);
-						break;
-					case UPDATE_CHECKIN:
-						if (activity != null) {
-							view = (View) msg.obj;
-							final CheckInFragment checkInFragment =
-									(CheckInFragment) (activity.getFragmentManager().findFragmentById(R.id.container));
-							if (checkInFragment != null) {
-								checkInFragment.updateLastCheckinText(view);
-							}
-						}
-				}
-			}
-
-		}
-	}
-	private final CheckInHandler mHandler = new CheckInHandler(this);
+	private Menu mOptionsMenu;
 
 	@Override
-    protected void onCreate(final Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_check_in);
-        if (savedInstanceState == null) {
+	protected void onCreate(final Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_check_in);
+		if (savedInstanceState == null) {
 			getFragmentManager().beginTransaction()
-                    .add(R.id.container, new CheckInFragment())
-                    .commit();
-        }
+					.add(R.id.container, new CheckInFragment())
+					.commit();
+		}
 
 		/*
-         * Create a new location client, using the enclosing class to
+		 * Create a new location client, using the enclosing class to
          * handle callbacks.
          */
 		mLocationClient = new LocationClient(this, this, this);
+
+		/**
+		 * Create or open the database which we'll use to store check in's.
+		 */
+		db = new CheckInDB(this);
+
+		/**
+		 * Create a handler for handling events on the UI thread
+		 */
+		mHandler = new CheckInHandler(this);
 
 	}
 
@@ -162,209 +101,113 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
 		super.onStop();
 	}
 
+	public Menu getOptionsMenu() {
+		return mOptionsMenu;
+	}
 
 	@Override
-    public boolean onCreateOptionsMenu(final Menu menu) {
-        
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.check_in, menu);
-        return true;
-    }
+	public boolean onCreateOptionsMenu(final Menu menu) {
+		mOptionsMenu = menu;
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.check_in, menu);
+		return true;
+	}
 
-    @Override
-    public boolean onOptionsItemSelected(final MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-		int id = item.getItemId();
-		if (id == R.id.action_settings) {
-			startActivity(new Intent(this, SettingsActivity.class));
-			return true;
+	protected void updateLastCheckinText() {
+		final CheckInFragment fragment = (CheckInFragment) getFragmentManager().findFragmentById(R.id.container);
+		if (fragment != null) {
+			fragment.updateLastCheckinText();
+		}
+	}
+
+	private void handleCheckIn() {
+		final Location location = getLocation();
+		if (location == null) {
+			Toast.makeText(
+					this,
+					getResources().getString(R.string.error_failed_to_get_location),
+					Toast.LENGTH_LONG
+			).show();
+			return;
+		}
+		final String json;
+		try {
+			json = GeoJSON.constructPoint(location).toString();
+		} catch (JSONException e) {
+			e.printStackTrace();
+			Toast.makeText(
+					this,
+					getResources().getString(R.string.error_failed_to_construct_geojson),
+					Toast.LENGTH_LONG
+			).show();
+			return;
+		}
+
+		if (db.createRecords(json) != -1) {
+			CheckInPreferences.setLastCheckin(this, Calendar.getInstance().getTimeInMillis());
+			updateLastCheckinText();
+			Toast.makeText(this,
+					getResources().getString(R.string.checked_in)
+							+ " " + location.getLatitude() + ", " + location.getLongitude(),
+					Toast.LENGTH_LONG
+			).show();
+		}
+	}
+
+	private void handleUpload() {
+		NetworkUtils.uploadCheckIns(db, mHandler);
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(final MenuItem item) {
+		// Handle action bar item clicks here. The action bar will
+		// automatically handle clicks on the Home/Up button, so long
+		// as you specify a parent activity in AndroidManifest.xml.
+		switch (item.getItemId()) {
+			case R.id.action_settings:
+				startActivity(new Intent(this, SettingsActivity.class));
+				return true;
+			case R.id.action_checkin:
+				handleCheckIn();
+				return true;
+			case R.id.action_upload:
+				handleUpload();
+				break;
 		}
 		return super.onOptionsItemSelected(item);
 	}
 
 	/**
-	 * When the check in button is pressed...
+	 * Fetch some GPS data to be posted to the server.
+	 *
+	 * @return The location.
+	 */
+	private Location getLocation() {
+		final Location location;
+		if (servicesConnected()) {
+			location = mLocationClient.getLastLocation();
+		} else {
+			location = null;
+		}
+
+		return location;
+	}
+
+	/**
+	 * When a button in the view is pressed...
 	 */
 	@Override
 	public void onFragmentInteraction(final View view) {
-		if (view != null && view.getContext() != null) {
-			view.setEnabled(false);
-			final HttpClient client = new DefaultHttpClient();
-			final String url = CheckInPreferences.getServerPref(view.getContext());
-
-			if (url == null || url.isEmpty()) {
-				if (getResources() != null) {
-					Toast.makeText(this,
-							getResources().getString(R.string.error_no_url_in_settings),
-							Toast.LENGTH_LONG).show();
-				}
-				view.setEnabled(true);
-				return;
-			}
-			final HttpPost post = new HttpPost(CheckInPreferences.getServerPref(view.getContext()));
-			/**
-			 * The data to be posted to the server.
-			 */
-			final List<NameValuePair> pairs = new ArrayList<>();
-			new Thread(new Runnable() {
-
-				/**
-				 * Show a toast on the UI thread.
-				 * @param toast The text of the toast to show.
-				 */
-				private void showToast(final String toast) {
-					if (toast != null && !toast.isEmpty()) {
-						final Message msg = mHandler.obtainMessage();
-						msg.arg1 = SHOW_TOAST;
-						msg.obj = toast;
-						mHandler.sendMessage(msg);
-					}
-				}
-
-				/**
-				 * Enable the given view on the UI thread.
-				 * @param view the view to enable.
-				 */
-				private void enableView(final View view) {
-					if (view != null) {
-						final Message msg = mHandler.obtainMessage();
-						msg.arg1 = ENABLE_VIEW;
-						msg.obj = view;
-						mHandler.sendMessage(msg);
-					}
-				}
-
-				/**
-				 * Update the last checkin text
-				 * @param view The view which contains the last checkin text and lable.
-				 */
-				private void updateLastCheckin(final View view) {
-					if (view != null) {
-						final Message msg = mHandler.obtainMessage();
-						msg.arg1 = UPDATE_CHECKIN;
-						msg.obj = view;
-						mHandler.sendMessage(msg);
-					}
-				}
-
-				/**
-				 * Fetch some GPS data to be posted to the server.
-				 * @return The location.
-				 */
-				private Location getLocation() {
-					final Location location;
-					if (servicesConnected()) {
-						location = mLocationClient.getLastLocation();
-					} else {
-						location = null;
-					}
-
-					return location;
-				}
-
-				/**
-				 * Starts executing the active part of the class' code. This method is
-				 * called when a thread is started that has been created with a class which
-				 * implements {@code Runnable}.
-				 */
-				@Override
-				public void run() {
-					// Get the location data for the post...
-					final Location location = getLocation();
-					if (location != null) {
-						// Construct a geoJSON object
-						final JSONObject json_data = new JSONObject();
-						final JSONObject geometry = new JSONObject();
-						final JSONObject properties = new JSONObject();
-						final JSONArray coordinates = new JSONArray();
-						try {
-							// Setup the root (feature) object
-							json_data.put("type", "Feature");
-
-							// Add some geometry to the feature
-							json_data.put("geometry", geometry);
-							geometry.put("type", "Point");
-							geometry.put("coordinates", coordinates);
-
-							// Set the coordinates
-							coordinates.put(location.getLongitude());
-							coordinates.put(location.getLatitude());
-							if (location.hasAltitude()) {
-								coordinates.put(location.getAltitude());
-							}
-
-							// Set up the properties object.
-							json_data.put("properties", properties);
-							if (location.hasAccuracy()) {
-								properties.put("accuracy", location.getAccuracy());
-							}
-							if (location.hasBearing()) {
-								properties.put("bearing", location.getBearing());
-							}
-							properties.put("provider", location.getProvider());
-							if (location.hasSpeed()) {
-								properties.put("speed", location.getSpeed());
-							}
-							properties.put("time", location.getTime());
-							properties.put("elapsed_realtime_nanos", location.getElapsedRealtimeNanos());
-							properties.put("raw", location.toString());
-						} catch (JSONException e) {
-							e.printStackTrace();
-						}
-						pairs.add(new BasicNameValuePair(POST_GPS_DATA, json_data.toString()));
-						pairs.add(new BasicNameValuePair(POST_API_KEY, CheckInPreferences.getApikeyPref(getApplicationContext())));
-					} else {
-						if (getResources() != null) {
-							showToast(
-									getResources().getString(R.string.error_failed_to_get_location)
-							);
-						}
-						return;
-					}
-
-					// Add the data to the post request...
-					try {
-						post.setEntity(new UrlEncodedFormEntity(pairs));
-					} catch (UnsupportedEncodingException e) {
-						if (getResources() != null) {
-							showToast(getResources().getString(R.string.error_unsupported_encoding));
-						}
-						enableView(view);
-						return;
-					}
-
-					// Run the HTTP post...
-					final HttpResponse response;
-					try {
-						response = client.execute(post);
-					} catch (IOException e) {
-						if (getResources() != null) {
-							showToast(getResources().getString(R.string.error_connection_failed));
-						}
-						enableView(view);
-						return;
-					}
-					if (response != null) {
-						showToast(response.getStatusLine().toString());
-						if (response.getStatusLine().getStatusCode() == 200
-								&& getApplicationContext() != null) {
-							CheckInPreferences.setLastCheckin(getApplicationContext(),
-									Calendar.getInstance().getTimeInMillis());
-						}
-					}
-
-					// Enable the button again.
-					enableView(view);
-					updateLastCheckin(view.getRootView());
-				}
-			}).start();
+		switch (view.getId()) {
+			case R.id.button_check_in:
+				handleCheckIn();
+				break;
 		}
 	}
 
 	/**
 	 * Called when we've connected to Google Play Services.
+	 *
 	 * @param bundle The bundle
 	 */
 	@Override
@@ -385,6 +228,7 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
 
 	/**
 	 * Called if we can't connect to Google Play Services.
+	 *
 	 * @param connectionResult The connection result.
 	 */
 	@Override
@@ -413,27 +257,6 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
 					CONNECTION_FAILURE_RESOLUTION_REQUEST).show();
 		}
 	}
-
-	// Define a DialogFragment that displays the error dialog
-	public static class ErrorDialogFragment extends DialogFragment {
-		// Global field to contain the error dialog
-		private Dialog mDialog;
-		// Default constructor. Sets the dialog field to null
-		public ErrorDialogFragment() {
-			super();
-			mDialog = null;
-		}
-		// Set the dialog to display
-		public void setDialog(Dialog dialog) {
-			mDialog = dialog;
-		}
-		// Return a Dialog to the DialogFragment.
-		@Override
-		public Dialog onCreateDialog(Bundle savedInstanceState) {
-			return mDialog;
-		}
-	}
-
 
 	private boolean servicesConnected() {
 		// Check that Google Play services is available
@@ -465,6 +288,29 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
 				}
 			}
 			return false;
+		}
+	}
+
+	// Define a DialogFragment that displays the error dialog
+	public static class ErrorDialogFragment extends DialogFragment {
+		// Global field to contain the error dialog
+		private Dialog mDialog;
+
+		// Default constructor. Sets the dialog field to null
+		public ErrorDialogFragment() {
+			super();
+			mDialog = null;
+		}
+
+		// Set the dialog to display
+		public void setDialog(Dialog dialog) {
+			mDialog = dialog;
+		}
+
+		// Return a Dialog to the DialogFragment.
+		@Override
+		public Dialog onCreateDialog(Bundle savedInstanceState) {
+			return mDialog;
 		}
 	}
 }

@@ -20,24 +20,25 @@ import com.samwhited.checkin.util.CheckInPreferences;
  */
 public class CheckInFragment extends Fragment implements Button.OnClickListener {
 
-    private OnFragmentInteractionListener mListener;
-
-    public CheckInFragment() {
-        // Required empty public constructor
-    }
-
 	// TODO: Possibly make this a preference?
 	public final static int dateFormatFlags = DateUtils.FORMAT_ABBREV_MONTH |
 			DateUtils.FORMAT_SHOW_YEAR |
 			DateUtils.FORMAT_SHOW_DATE |
 			DateUtils.FORMAT_SHOW_TIME;
+	private OnFragmentInteractionListener mListener;
 
-	protected void updateLastCheckinText(final View view) {
+	public CheckInFragment() {
+		// Required empty public constructor
+	}
+
+	private void updateLastCheckinText(final View view) {
+		if (view == null) {
+			return;
+		}
 		final TextView lastCheckin = (TextView) view.findViewById(R.id.last_check_in);
 		final TextView lastCheckinTitle = (TextView) view.findViewById(R.id.last_check_in_title);
 
 		if (lastCheckin != null && getActivity() != null) {
-
 			// Update the last checkin time.
 			final long checkinTime = CheckInPreferences.getLastCheckin(getActivity());
 			if (checkinTime != 0) {
@@ -50,11 +51,15 @@ public class CheckInFragment extends Fragment implements Button.OnClickListener 
 		}
 	}
 
-    @Override
-    public View onCreateView(final LayoutInflater inflater,
+	protected void updateLastCheckinText() {
+		updateLastCheckinText(getView());
+	}
+
+	@Override
+	public View onCreateView(final LayoutInflater inflater,
 							 final ViewGroup container,
-                             final Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+							 final Bundle savedInstanceState) {
+		// Inflate the layout for this fragment
 		final View view = inflater.inflate(R.layout.fragment_check_in, container, false);
 		if (view != null) {
 			final Button button = (Button) view.findViewById(R.id.button_check_in);
@@ -64,25 +69,25 @@ public class CheckInFragment extends Fragment implements Button.OnClickListener 
 
 			updateLastCheckinText(view);
 		}
-        return view;
-    }
+		return view;
+	}
 
-    @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        try {
-            mListener = (OnFragmentInteractionListener) activity;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString()
-                    + " must implement OnFragmentInteractionListener");
-        }
-    }
+	@Override
+	public void onAttach(Activity activity) {
+		super.onAttach(activity);
+		try {
+			mListener = (OnFragmentInteractionListener) activity;
+		} catch (ClassCastException e) {
+			throw new ClassCastException(activity.toString()
+					+ " must implement OnFragmentInteractionListener");
+		}
+	}
 
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mListener = null;
-    }
+	@Override
+	public void onDetach() {
+		super.onDetach();
+		mListener = null;
+	}
 
 	/**
 	 * Called when the check in button has been clicked.
@@ -97,13 +102,13 @@ public class CheckInFragment extends Fragment implements Button.OnClickListener 
 	}
 
 	/**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     */
-    public interface OnFragmentInteractionListener {
-        public void onFragmentInteraction(final View view);
-    }
+	 * This interface must be implemented by activities that contain this
+	 * fragment to allow an interaction in this fragment to be communicated
+	 * to the activity and potentially other fragments contained in that
+	 * activity.
+	 */
+	public interface OnFragmentInteractionListener {
+		public void onFragmentInteraction(final View view);
+	}
 
 }

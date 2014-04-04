@@ -7,11 +7,8 @@ import android.preference.PreferenceManager;
  */
 public final class CheckInPreferences {
 
-	private static final String SERVER_PREF = "pref_server";
-	private static final String APIKEY_PREF = "pref_api_key";
-
-	// Though not technically a pref, we're going to store the last check in that way.
-	// Just don't expose it via the preferences UI...
+	private static final String SERVER_PREF  = "pref_server";
+	private static final String APIKEY_PREF  = "pref_api_key";
 	private static final String LAST_CHECKIN = "last_checkin";
 
 	public static String getServerPref(final Context context) {

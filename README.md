@@ -5,6 +5,37 @@ key as an HTTP post request to a specified server. That is all it does.
 Implementation of the server is up to you, but an example server written in Go
 can be found [here](https://gist.github.com/SamWhited/9941159).
 
+## Why?
+
+In April 2014 I decided to attempt a thru-hike of the 2100 mile Appalachian
+Trail from Georgia to Maine. I thought it might be nice to keep track of my
+journey and have some data to play with later, but all the apps for keeping
+track of things like that required an internet connection while in use, consumed
+a lot of battery, or required the use of a proprietary service that wouldn't
+allow me to get all the data I wanted. So, two weeks before the trip, I wrote my
+own client and server (similar to the example server above).
+
+# Data
+
+Data is sent to the server in the form of a [GeoJSON][geojson] [point][point]
+feature or as a [feature collection][featurecol] object if multiple points are
+being uploaded in a single HTTP POST, so your server should be able to handle
+both cases. There will often be extra metadata attached in the `properties` key
+of each `geometry` object, so your server MUST tolerate unknown fields.
+
+## POST
+
+Three fields are set in the post request:
+
+ - `location` — The actual location data as a GeoJSON object
+ - `type` — The type of the GeoJSON object in `location`
+ - `api_key` — An API key for authentication (if provided by the user)
+
+While the GeoJSON type can always be retreived from the JSON itself after
+parsing, it is sometimes useful to have this information before you've actually
+parsed the JSON string. The `type` field will always be one of
+`FeatureCollection`, `Feature`, or `Unknown` if an error occurs (not likely).
+
 # Building
 
 To build run:
@@ -14,23 +45,6 @@ To build run:
 Make sure you have `Google Play Services` and `Google Repository` installed in
 the Android SDK manager. Also, API level 19 and the latest build tools.
 
-# License
-
-Copyright © 2014 Sam Whited
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the “Software”), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+[geojson]: http://geojson.org/geojson-spec.html#feature-collection-objects
+[point]: http://geojson.org/geojson-spec.html#point
+[featurecol]: http://geojson.org/geojson-spec.html#feature-collection-objects
