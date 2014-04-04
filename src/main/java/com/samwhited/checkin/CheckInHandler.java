@@ -49,34 +49,34 @@ public final class CheckInHandler extends Handler {
 			return;
 		}
 
-		if (msg.obj != null) {
-			final CheckIn activity = mActivity.get();
-			switch (msg.arg1) {
-				case SHOW_TOAST:
+		final CheckIn activity = mActivity.get();
+		switch (msg.arg1) {
+			case SHOW_TOAST:
+				if (msg.obj != null) {
+
 					final String text = msg.obj.toString();
 					if (text != null && !text.isEmpty() && activity != null) {
 						Toast.makeText(activity, text, Toast.LENGTH_LONG).show();
 					}
-					break;
-				case UPDATE_VIEW:
-					if (activity != null) {
-						activity.updateLastCheckinText();
-					}
-					break;
-				case DISABLE_UPLOAD:
-				case ENABLE_UPLOAD:
-					if (activity != null) {
-						final Menu menu = activity.getOptionsMenu();
-						if (menu != null) {
-							final MenuItem uploadButton = menu.findItem(R.id.action_upload);
-							if (uploadButton != null) {
-								uploadButton.setEnabled(msg.arg1 == ENABLE_UPLOAD);
-							}
+				}
+				break;
+			case UPDATE_VIEW:
+				if (activity != null) {
+					activity.updateLastCheckinText();
+				}
+				break;
+			case DISABLE_UPLOAD:
+			case ENABLE_UPLOAD:
+				if (activity != null) {
+					final Menu menu = activity.getOptionsMenu();
+					if (menu != null) {
+						final MenuItem uploadButton = menu.findItem(R.id.action_upload);
+						if (uploadButton != null) {
+							uploadButton.setEnabled(msg.arg1 == ENABLE_UPLOAD);
 						}
 					}
-					break;
-			}
+				}
+				break;
 		}
-
 	}
 }

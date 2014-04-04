@@ -207,6 +207,7 @@ public class NetworkUtils {
 						for (final long id : ids) {
 							db.deleteRecord(id);
 						}
+						CheckInPreferences.setNumCheckins(context, db.numRecords());
 					}
 				}
 

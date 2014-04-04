@@ -29,4 +29,23 @@
               android:textAppearance="?android:attr/textAppearanceLarge"
               android:id="@+id/last_check_in"
               android:layout_below="@+id/last_check_in_title" />
+
+    <LinearLayout android:id="@+id/unuploaded_layout"
+                  android:orientation="horizontal"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:visibility="invisible"
+                  android:layout_below="@+id/last_check_in">
+        <TextView android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:textAppearance="?android:attr/textAppearanceMedium"
+                  android:id="@+id/unuploaded_checkins_title"
+                  android:text="@string/title_unuploaded"
+                  android:labelFor="@+id/unuploaded_checkins" />
+        <TextView android:layout_width="wrap_content"
+                  android:layout_marginLeft="5dp"
+                  android:layout_height="wrap_content"
+                  android:textAppearance="?android:attr/textAppearanceMedium"
+                  android:id="@+id/unuploaded_checkins" />
+    </LinearLayout>
 </RelativeLayout>

@@ -32,7 +32,7 @@ public class CheckInDB {
 
 	public int deleteRecord(final long id) {
 		return db.delete(CheckInOpenHelper.CHECKIN_TABLE_NAME,
-				CheckInOpenHelper.ID_NAME + id,
+				CheckInOpenHelper.ID_NAME + "=" + id,
 				null);
 	}
 

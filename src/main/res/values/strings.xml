@@ -20,5 +20,6 @@
     <string name="pref_api_key">API Key</string>
     <string name="checked_in">Checked in:</string>
     <string name="error_nothing_to_upload">There is nothing to upload</string>
+    <string name="title_unuploaded">Unuploaded:</string>
 
 </resources>

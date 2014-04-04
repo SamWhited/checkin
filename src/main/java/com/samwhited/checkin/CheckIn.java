@@ -145,6 +145,7 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
 
 		if (db.createRecords(json) != -1) {
 			CheckInPreferences.setLastCheckin(this, Calendar.getInstance().getTimeInMillis());
+			CheckInPreferences.setNumCheckins(this, db.numRecords());
 			updateLastCheckinText();
 			Toast.makeText(this,
 					getResources().getString(R.string.checked_in)

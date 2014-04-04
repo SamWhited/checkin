@@ -49,6 +49,16 @@ public class CheckInFragment extends Fragment implements Button.OnClickListener 
 				lastCheckinTitle.setVisibility(View.VISIBLE);
 			}
 		}
+
+		final TextView unuploaded = (TextView) view.findViewById(R.id.unuploaded_checkins);
+		final View unuploadedLayout = view.findViewById(R.id.unuploaded_layout);
+
+		if (unuploaded != null && getActivity() != null) {
+			// Update the last checkin time.
+			final long numCheckins = CheckInPreferences.getNumCheckins(getActivity());
+			unuploaded.setText(String.valueOf(numCheckins));
+			unuploadedLayout.setVisibility(View.VISIBLE);
+		}
 	}
 
 	protected void updateLastCheckinText() {
