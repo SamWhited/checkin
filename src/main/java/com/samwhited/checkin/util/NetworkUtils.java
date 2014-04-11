@@ -5,10 +5,11 @@ import android.database.Cursor;
 import android.os.Message;
 import android.widget.Toast;
 
-import com.samwhited.checkin.CheckInDB;
+import com.samwhited.checkin.database.CheckInDB;
 import com.samwhited.checkin.CheckInHandler;
-import com.samwhited.checkin.CheckInOpenHelper;
+import com.samwhited.checkin.database.CheckInOpenHelper;
 import com.samwhited.checkin.R;
+import com.samwhited.checkin.model.CheckIn;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -124,8 +125,8 @@ public class NetworkUtils {
 						pairs.add(new BasicNameValuePair(POST_DATA_TYPE, "Feature"));
 
 						try {
-							geojson = new JSONObject(cursor.getString(
-									cursor.getColumnIndex(CheckInOpenHelper.BLOB_NAME)));
+
+							geojson = (new CheckIn(cursor)).toGeoJSON();
 							geojson.put("type", "Feature");
 						} catch (JSONException e) {
 							showToast(context.getResources().getString(R.string.error_failed_to_construct_geojson));
@@ -143,10 +144,7 @@ public class NetworkUtils {
 						// Add each json blob to the array.
 						for (JSONObject point; !cursor.isAfterLast(); cursor.moveToNext()) {
 							try {
-								point = new JSONObject(
-										cursor.getString(
-												cursor.getColumnIndex(CheckInOpenHelper.BLOB_NAME))
-								);
+								point = (new CheckIn(cursor)).toGeoJSON();
 							} catch (JSONException e1) {
 								// If the record is invalid, just delete it.
 								db.deleteRecord(cursor.getLong(
@@ -207,7 +205,6 @@ public class NetworkUtils {
 						for (final long id : ids) {
 							db.deleteRecord(id);
 						}
-						CheckInPreferences.setNumCheckins(context, db.numRecords());
 					}
 				}
 

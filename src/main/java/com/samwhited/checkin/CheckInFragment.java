@@ -3,14 +3,16 @@ package com.samwhited.checkin;
 import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
-import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Spinner;
+import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 
 import com.samwhited.checkin.util.CheckInPreferences;
+import com.samwhited.checkin.util.Formatting;
 
 /**
  * A simple {@link android.app.Fragment} subclass.
@@ -20,11 +22,6 @@ import com.samwhited.checkin.util.CheckInPreferences;
  */
 public class CheckInFragment extends Fragment implements Button.OnClickListener {
 
-	// TODO: Possibly make this a preference?
-	public final static int dateFormatFlags = DateUtils.FORMAT_ABBREV_MONTH |
-			DateUtils.FORMAT_SHOW_YEAR |
-			DateUtils.FORMAT_SHOW_DATE |
-			DateUtils.FORMAT_SHOW_TIME;
 	private OnFragmentInteractionListener mListener;
 
 	public CheckInFragment() {
@@ -42,9 +39,7 @@ public class CheckInFragment extends Fragment implements Button.OnClickListener 
 			// Update the last checkin time.
 			final long checkinTime = CheckInPreferences.getLastCheckin(getActivity());
 			if (checkinTime != 0) {
-				final String formatted = DateUtils.formatDateTime(getActivity(),
-						checkinTime,
-						dateFormatFlags);
+				final String formatted = Formatting.formatDateTime(getActivity(), checkinTime);
 				lastCheckin.setText(formatted);
 				lastCheckinTitle.setVisibility(View.VISIBLE);
 			}
@@ -54,8 +49,11 @@ public class CheckInFragment extends Fragment implements Button.OnClickListener 
 		final View unuploadedLayout = view.findViewById(R.id.unuploaded_layout);
 
 		if (unuploaded != null && getActivity() != null) {
-			// Update the last checkin time.
-			final long numCheckins = CheckInPreferences.getNumCheckins(getActivity());
+			long numCheckins = 0;
+			if (getActivity() instanceof CheckInActivity) {
+				numCheckins = ((CheckInActivity)getActivity()).getNumCheckIns();
+			}
+
 			unuploaded.setText(String.valueOf(numCheckins));
 			unuploadedLayout.setVisibility(View.VISIBLE);
 		}
@@ -77,13 +75,26 @@ public class CheckInFragment extends Fragment implements Button.OnClickListener 
 				button.setOnClickListener(this);
 			}
 
+			// Display the actual icons next to their description in the icon selection spinner.
+			final Spinner spinner = (Spinner) view.findViewById(R.id.icon_spinner);
+			if (spinner != null) {
+				final String[] icons = getResources().getStringArray(R.array.marker_values);
+				final String[] names = getResources().getStringArray(R.array.marker_names);
+				final SpinnerAdapter adapter = new IconSpinnerAdapter(getActivity(),
+						android.R.layout.simple_spinner_dropdown_item,
+						names,
+						icons);
+				spinner.setAdapter(adapter);
+				spinner.invalidate();
+			}
+
 			updateLastCheckinText(view);
 		}
 		return view;
 	}
 
 	@Override
-	public void onAttach(Activity activity) {
+	public void onAttach(final Activity activity) {
 		super.onAttach(activity);
 		try {
 			mListener = (OnFragmentInteractionListener) activity;
@@ -119,6 +130,17 @@ public class CheckInFragment extends Fragment implements Button.OnClickListener 
 	 */
 	public interface OnFragmentInteractionListener {
 		public void onFragmentInteraction(final View view);
+	}
+
+	public String getSelectedIcon() {
+		if (getView() != null) {
+			final Spinner spinner = (Spinner) getView().findViewById(R.id.icon_spinner);
+			if (spinner != null) {
+				final String[] icons = getResources().getStringArray(R.array.marker_values);
+				return icons[spinner.getSelectedItemPosition()];
+			}
+		}
+		return "";
 	}
 
 }

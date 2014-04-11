@@ -17,15 +17,14 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationClient;
+import com.samwhited.checkin.database.CheckInDB;
+import com.samwhited.checkin.model.CheckIn;
 import com.samwhited.checkin.util.CheckInPreferences;
-import com.samwhited.checkin.util.GeoJSON;
 import com.samwhited.checkin.util.NetworkUtils;
-
-import org.json.JSONException;
 
 import java.util.Calendar;
 
-public class CheckIn extends Activity implements CheckInFragment.OnFragmentInteractionListener,
+public class CheckInActivity extends Activity implements CheckInFragment.OnFragmentInteractionListener,
 		GooglePlayServicesClient.OnConnectionFailedListener,
 		GooglePlayServicesClient.ConnectionCallbacks {
 
@@ -48,11 +47,6 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
 	 */
 	private CheckInDB db;
 
-	/**
-	 * The options menu used by this activity.
-	 */
-	private Menu mOptionsMenu;
-
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -69,7 +63,7 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
          */
 		mLocationClient = new LocationClient(this, this, this);
 
-		/**
+		/*
 		 * Create or open the database which we'll use to store check in's.
 		 */
 		db = new CheckInDB(this);
@@ -101,19 +95,14 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
 		super.onStop();
 	}
 
-	public Menu getOptionsMenu() {
-		return mOptionsMenu;
-	}
-
 	@Override
 	public boolean onCreateOptionsMenu(final Menu menu) {
-		mOptionsMenu = menu;
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.check_in, menu);
 		return true;
 	}
 
-	protected void updateLastCheckinText() {
+	protected void updateViews() {
 		final CheckInFragment fragment = (CheckInFragment) getFragmentManager().findFragmentById(R.id.container);
 		if (fragment != null) {
 			fragment.updateLastCheckinText();
@@ -130,23 +119,18 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
 			).show();
 			return;
 		}
-		final String json;
-		try {
-			json = GeoJSON.constructPoint(location).toString();
-		} catch (JSONException e) {
-			e.printStackTrace();
-			Toast.makeText(
-					this,
-					getResources().getString(R.string.error_failed_to_construct_geojson),
-					Toast.LENGTH_LONG
-			).show();
-			return;
-		}
 
-		if (db.createRecords(json) != -1) {
+
+		final CheckInFragment fragment = (CheckInFragment)getFragmentManager().findFragmentById(R.id.container);
+		final CheckIn checkIn;
+		if (fragment != null) {
+			checkIn = new CheckIn(location, fragment.getSelectedIcon());
+		} else {
+			checkIn = new CheckIn(location);
+		}
+		if (db.createRecords(checkIn) != -1) {
 			CheckInPreferences.setLastCheckin(this, Calendar.getInstance().getTimeInMillis());
-			CheckInPreferences.setNumCheckins(this, db.numRecords());
-			updateLastCheckinText();
+			updateViews();
 			Toast.makeText(this,
 					getResources().getString(R.string.checked_in)
 							+ " " + location.getLatitude() + ", " + location.getLongitude(),
@@ -168,14 +152,18 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
 			case R.id.action_settings:
 				startActivity(new Intent(this, SettingsActivity.class));
 				return true;
-			case R.id.action_checkin:
-				handleCheckIn();
+			case R.id.action_list:
+				handleList();
 				return true;
 			case R.id.action_upload:
 				handleUpload();
 				break;
 		}
 		return super.onOptionsItemSelected(item);
+	}
+
+	private void handleList() {
+		startActivity(new Intent(this, CheckInList.class));
 	}
 
 	/**
@@ -257,6 +245,10 @@ public class CheckIn extends Activity implements CheckInFragment.OnFragmentInter
 					this,
 					CONNECTION_FAILURE_RESOLUTION_REQUEST).show();
 		}
+	}
+
+	public long getNumCheckIns() {
+		return db.numRecords();
 	}
 
 	private boolean servicesConnected() {
