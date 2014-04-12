@@ -29,7 +29,6 @@ public class CheckInListFragment extends ListFragment implements
 		ActionMode.Callback {
 
     private OnListInteractionListener mListener;
-	private ActionMode actionMode;
 	private boolean batchMode;
 
     /**
@@ -46,8 +45,6 @@ public class CheckInListFragment extends ListFragment implements
 				public boolean onItemLongClick(AdapterView<?> adapterView, View v, int position, long id) {
 					final CheckInListAdapter adapter = (CheckInListAdapter)adapterView.getAdapter();
 					if (getActivity() != null) {
-						//actionMode =
-						actionMode = getActivity().startActionMode(CheckInListFragment.this);
 						batchMode = true;
 
 						if (adapter != null) {
@@ -329,7 +326,6 @@ public class CheckInListFragment extends ListFragment implements
 		if (getListAdapter() != null) {
 			((CheckInListAdapter) getListAdapter()).initializeBatchMode(false);
 		}
-		actionMode = null;
 		batchMode  = false;
 	}
 
