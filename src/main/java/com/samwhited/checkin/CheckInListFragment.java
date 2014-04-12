@@ -64,7 +64,6 @@ public class CheckInListFragment extends ListFragment implements
 	}
 
 	private void initializeListAdapter() {
-		this.setListAdapter(new CheckInListAdapter(this.getActivity(), null, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER));
 		if (getListView() != null && getLoaderManager() != null) {
 			getListView().setRecyclerListener((CheckInListAdapter) getListAdapter());
 			getLoaderManager().restartLoader(0, null, this);

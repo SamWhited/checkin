@@ -44,7 +44,7 @@ public class CheckInList extends Activity
 		mHandler = new CheckInHandler(this);
 
 		fragment = new CheckInListFragment();
-		fragment.setListAdapter(new SimpleCursorAdapter(this,
+		fragment.setListAdapter(new CheckInListAdapter(this,
 				android.R.layout.simple_list_item_1,
 				db.selectRecords(),
 				new String[]{CheckInOpenHelper.ID_NAME},
@@ -101,7 +101,10 @@ public class CheckInList extends Activity
 					}
 					@Override
 					protected void onPostExecute(Void result) {
-						reloadData();
+						notifyDatasetChanged();
+						if (fragment.getLoaderManager() != null) {
+							fragment.getLoaderManager().restartLoader(0, null, fragment);
+						}
 					}
 				}.execute();
 			}
@@ -112,15 +115,12 @@ public class CheckInList extends Activity
 
 	private void handleUpload() {
 		NetworkUtils.uploadCheckIns(db, mHandler);
-		reloadData();
+		notifyDatasetChanged();
 	}
 
-	private void reloadData() {
+	private void notifyDatasetChanged() {
 		if (fragment.getListAdapter() != null) {
 			((CheckInListAdapter) fragment.getListAdapter()).notifyDataSetChanged();
-		}
-		if (fragment.getLoaderManager() != null) {
-			fragment.getLoaderManager().restartLoader(0, null, fragment);
 		}
 	}
 
