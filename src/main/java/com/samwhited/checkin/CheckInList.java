@@ -101,7 +101,7 @@ public class CheckInList extends Activity
 					}
 					@Override
 					protected void onPostExecute(Void result) {
-						notifyDatasetChanged();
+						reloadData();
 					}
 				}.execute();
 			}
@@ -112,12 +112,15 @@ public class CheckInList extends Activity
 
 	private void handleUpload() {
 		NetworkUtils.uploadCheckIns(db, mHandler);
-		notifyDatasetChanged();
+		reloadData();
 	}
 
-	private void notifyDatasetChanged() {
+	private void reloadData() {
 		if (fragment.getListAdapter() != null) {
 			((CheckInListAdapter) fragment.getListAdapter()).notifyDataSetChanged();
+		}
+		if (fragment.getLoaderManager() != null) {
+			fragment.getLoaderManager().restartLoader(0, null, fragment);
 		}
 	}
 
