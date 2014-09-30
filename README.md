@@ -15,17 +15,23 @@ a lot of battery, or required the use of a proprietary service that wouldn't
 allow me to get all the data I wanted. So, two weeks before the trip, I wrote my
 own client and server (similar to the example server above).
 
-# Data
+# API
 
-Data is sent to the server in the form of a [GeoJSON][geojson] [point][point]
-feature or as a [feature collection][featurecol] object if multiple points are
+Check In expects any server it communicates with to provide the following API. Your server MUST implement this API.
+
+## GET / (OPTIONAL)
+
+Data is returned from the server as a [GeoJSON][geojson] [feature collection][featurecol].
+
+## POST / (REQUIRED)
+
+Data is sent to the server in the form of a GeoJSON [point][point]
+feature or as a feature collection object if multiple points are
 being uploaded in a single HTTP POST, so your server should be able to handle
 both cases. There will often be extra metadata attached in the `properties` key
 of each `geometry` object, so your server MUST tolerate unknown fields.
 
-## POST
-
-Three fields are set in the post request:
+Three fields are set in the POST request:
 
  - `location` — The actual location data as a GeoJSON object
  - `type` — The type of the GeoJSON object in `location`
