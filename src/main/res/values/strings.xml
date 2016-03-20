@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="title_discard_all_checkins">Delete all check in\'s?</string>
+    <string name="confirm_discard_all_checkins">Are you sure you want to discard all check in\'s?</string>
+    <string name="delete">Delete</string>
+    <string name="title_settings">Settings</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_upload">Upload</string>
+    <string name="action_check_in">Check In</string>
+    <string name="app_name">Check In</string>
+    <string name="button_check_in">Check In</string>
+    <string name="pref_title_server">Server</string>
+    <string name="pref_description_server">https://example.tld:2230</string>
+    <string name="error_unsupported_encoding">Unsupported encoding</string>
+    <string name="error_connection_failed">Connection failed</string>
+    <string name="error_location_lost">Location lost</string>
+    <string name="error_failed_to_get_location">Failed to get location</string>
+    <string name="error_failed_to_construct_geojson">Failed to construct GeoJSON</string>
+    <string name="error_no_url_in_settings">No URL in settings</string>
+    <string name="title_last_checkin">Last check in:</string>
+    <string name="title_location_updates">Location Updates</string>
+    <string name="pref_api_key">API Key</string>
+    <string name="checked_in">Checked in:</string>
+    <string name="error_nothing_to_upload">There is nothing to upload</string>
+    <string name="title_unuploaded">Unuploaded:</string>
+    <string name="title_activity_check_in_list">Check Ins</string>
+    <string name="action_discard">Discard</string>
+</resources>
